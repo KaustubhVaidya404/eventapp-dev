@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Event {
+  id        Int        @id @default(autoincrement())
+  name      String @unique
+  startDate DateTime
+  endDate   DateTime
+  subEvents SubEvent[]
+}
+
+model SubEvent {
+  id        Int      @id @default(autoincrement())
+  name      String @unique
+  startTime DateTime
+  endTime   DateTime
+  Event     Event    @relation(fields: [eventId], references: [id])
+  eventId   Int
+  userEvents UserEvent[]
+}
+
+model User {
+  id        Int    @id @default(autoincrement())
+  name      String
+  email     String @unique
+  phone     BigInt @unique
+  imageUrl  String? @default("")
+  class     Class
+  userEvents UserEvent[]
+}
+
+model UserEvent {
+  userId       Int
+  subEventId   Int
+  attendedAt   DateTime?   // Timestamp when the user attended
+  
+  user         User        @relation(fields: [userId], references: [id])
+  subEvent     SubEvent   @relation(fields: [subEventId], references: [id])
+  
+  @@id([userId, subEventId])  // Enforces unique attendance per user-event or user-sub-event combination
+}
+
+enum Class {
+  Participant
+  Admin
+  Onspot
+}
